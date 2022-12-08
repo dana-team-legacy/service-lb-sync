@@ -18,13 +18,13 @@ package controllers
 
 import (
 	"context"
+	"github.com/dana-team/service-lb-sync/pkg/utils"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"svc-lb-sync/pkg/utills"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -41,10 +41,19 @@ type ServiceReconciler struct {
 	ServiceEventChannel chan event.GenericEvent
 }
 
-//TODO tests
-//TODO logs
+//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=services/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=core,resources=services/finalizers,verbs=update
 
-//Reconcile gets events from Services from type LoadBalancer from both hosted and infra cluster
+// Reconcile is part of the main kubernetes reconciliation loop which aims to
+// move the current state of the cluster closer to the desired state.
+// TODO(user): Modify the Reconcile function to compare the state specified by
+// the Service object against the actual cluster state, and then
+// perform operations to make the cluster state reflect the state specified by
+// the user.
+//
+// For more details, check Reconcile and its Result here:
+// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.2/pkg/reconcile
 func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 	log.Info("got:", req.Name, req.Namespace)
@@ -87,11 +96,10 @@ func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	return r.ReconcileNormal(ctx, infraSvc, hostedSvc)
-
 }
 
-//GetSvcsFromInfraReconclie if we reconclie from infra cluster fetching both svcs is easy since we got annotations
-//to help us get the source Service on the hosted cluster
+// GetSvcsFromInfraReconclie if we reconclie from infra cluster fetching both svcs is easy since we got annotations
+// to help us get the source Service on the hosted cluster
 func (r *ServiceReconciler) GetSvcsFromInfraReconclie(ctx context.Context, req ctrl.Request) (*corev1.Service, *corev1.Service, error) {
 	infraSvc := &corev1.Service{}
 	hostedSvc := &corev1.Service{}
@@ -116,9 +124,9 @@ func (r *ServiceReconciler) GetSvcsFromInfraReconclie(ctx context.Context, req c
 	return infraSvc, hostedSvc, nil
 }
 
-//GetSvcsFromHostedReconclie if we reconclie from the hosted cluster is a bit more difficult to track the sync Service
-//since we creates it with GenerateName to avoid name collisions to do so we use a helper func findSyncedSvc
-//TODO this could maybe be solved by using an indexer
+// GetSvcsFromHostedReconclie if we reconclie from the hosted cluster is a bit more difficult to track the sync Service
+// since we creates it with GenerateName to avoid name collisions to do so we use a helper func findSyncedSvc
+// TODO this could maybe be solved by using an indexer
 func (r *ServiceReconciler) GetSvcsFromHostedReconclie(ctx context.Context, req ctrl.Request) (*corev1.Service, *corev1.Service, error) {
 	infraSvc := &corev1.Service{}
 	hostedSvc := &corev1.Service{}
@@ -137,7 +145,7 @@ func (r *ServiceReconciler) GetSvcsFromHostedReconclie(ctx context.Context, req 
 
 }
 
-//findSyncedSvc iterates over all synced Services and finds our desired Service using annotations
+// findSyncedSvc iterates over all synced Services and finds our desired Service using annotations
 func (r *ServiceReconciler) findSyncedSvc(ctx context.Context, req ctrl.Request) (*corev1.Service, error) {
 	svcList := &corev1.ServiceList{}
 	syncedSvc := &corev1.Service{}
@@ -155,7 +163,7 @@ func (r *ServiceReconciler) findSyncedSvc(ctx context.Context, req ctrl.Request)
 	return syncedSvc, nil
 }
 
-//ReconcileMissingInfra if sync service is missing, just create it
+// ReconcileMissingInfra if sync service is missing, just create it
 func (r *ServiceReconciler) ReconcileMissingInfra(ctx context.Context, hostedSvc *corev1.Service) (ctrl.Result, error) {
 
 	clusterGenName, err := utills.GetClusterGenName(ctx, r.InfraClient) //cluster generated name is needed for selectors
@@ -170,8 +178,8 @@ func (r *ServiceReconciler) ReconcileMissingInfra(ctx context.Context, hostedSvc
 	return ctrl.Result{}, nil
 }
 
-//ReconcileMissingHosted if hosted service is missing someone is probably deleted it
-//therefore delete the synced service
+// ReconcileMissingHosted if hosted service is missing someone is probably deleted it
+// therefore delete the synced service
 func (r *ServiceReconciler) ReconcileMissingHosted(ctx context.Context, infraSvc *corev1.Service) (ctrl.Result, error) {
 	if err := r.InfraClient.Delete(ctx, infraSvc); err != nil {
 		return ctrl.Result{}, err
@@ -179,7 +187,7 @@ func (r *ServiceReconciler) ReconcileMissingHosted(ctx context.Context, infraSvc
 	return ctrl.Result{}, nil
 }
 
-//ReconcileNormal sync infra and hosted SVCs
+// ReconcileNormal sync infra and hosted SVCs
 func (r *ServiceReconciler) ReconcileNormal(ctx context.Context, infraSvc *corev1.Service, hostedSvc *corev1.Service) (ctrl.Result, error) {
 	//TODO handle hosted cluster svc update
 	if len(hostedSvc.Status.LoadBalancer.Ingress) != 0 {
@@ -194,7 +202,6 @@ func (r *ServiceReconciler) ReconcileNormal(ctx context.Context, infraSvc *corev
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
-
 	//we only want Services from type LoadBalancer to enter the reconcile function
 	//in the ifra cluster the kube-apiserver is also a service from type LoadBalancer
 	//we assume there will be no other Services from type LoadBalancer others then the Services this controller creates
