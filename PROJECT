@@ -1,8 +1,11 @@
 domain: dana.io
 layout:
 - go.kubebuilder.io/v3
-projectName: svc-lb-sync
-repo: svc-lb-sync
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: service-lb-sync
+repo: github.com/dana-team/service-lb-sync
 resources:
 - controller: true
   group: core

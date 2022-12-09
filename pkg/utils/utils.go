@@ -57,8 +57,8 @@ func GetHostedKubeRestConfig(c client.Client) (*rest.Config, error) {
 	return clientConfig.ClientConfig()
 }
 
-//GetInfraSvcFromHostedSvc creates a Service object for the infra cluster
-//TODO will probably require modification to fit our LB solution
+// GetInfraSvcFromHostedSvc creates a Service object for the infra cluster
+// TODO will probably require modification to fit our LB solution
 func GetInfraSvcFromHostedSvc(hostedSvc *corev1.Service, clusterGenName string) *corev1.Service {
 	infraSvc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -81,10 +81,10 @@ func GetInfraSvcFromHostedSvc(hostedSvc *corev1.Service, clusterGenName string) 
 	return infraSvc
 }
 
-//GetClusterGenName get the cluster generated name to use as a selector for the synced service
-//we get the name from a Cluster CR in the current ns, since we don't know the name of the CR we must use List instead of Get
-//we assume there will be only on instance of the Cluster CR in a ns
-//TODO find a better way to get cluster gen name
+// GetClusterGenName get the cluster generated name to use as a selector for the synced service
+// we get the name from a Cluster CR in the current ns, since we don't know the name of the CR we must use List instead of Get
+// we assume there will be only on instance of the Cluster CR in a ns
+// TODO find a better way to get cluster gen name
 func GetClusterGenName(ctx context.Context, c client.Client) (string, error) {
 	cluster := &unstructured.UnstructuredList{}
 	cluster.SetGroupVersionKind(schema.GroupVersionKind{

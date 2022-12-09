@@ -15,15 +15,15 @@ type channelSvcWatcher struct {
 	sharedInformer cache.SharedIndexInformer
 }
 
-//Start used to implement the Runnable interface for manager support
+// Start used to implement the Runnable interface for manager support
 func (sw channelSvcWatcher) Start(ctx context.Context) error {
 	sw.sharedInformer.Run(ctx.Done())
 	return nil
 }
 
-//NewChannelSvcWatcher is creating new "low level" informer for Services
-//all events from this informer are piped into a channel which will be used to feed our controller
-//with events from the hosted cluster
+// NewChannelSvcWatcher is creating new "low level" informer for Services
+// all events from this informer are piped into a channel which will be used to feed our controller
+// with events from the hosted cluster
 func NewChannelSvcWatcher(c *rest.Config, channel chan event.GenericEvent) channelSvcWatcher {
 	sendMsg := func(obj interface{}) {
 		channel <- event.GenericEvent{Object: obj.(client.Object)}

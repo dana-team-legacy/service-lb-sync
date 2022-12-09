@@ -18,14 +18,12 @@ package main
 
 import (
 	"flag"
+	"github.com/dana-team/service-lb-sync/pkg/controllers"
+	utills "github.com/dana-team/service-lb-sync/pkg/utils"
+	"github.com/dana-team/service-lb-sync/pkg/watcher"
 	"os"
-	"svc-lb-sync/pkg/controllers"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-
-	"svc-lb-sync/pkg/utills"
-	"svc-lb-sync/pkg/watcher"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -50,12 +48,6 @@ func init() {
 
 	//+kubebuilder:scaffold:scheme
 }
-
-//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=core,resources=services/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=core,resources=services/finalizers,verbs=update
-//+kubebuilder:rbac:groups=core,resources=secrets,verbs=get
-//+kubebuilder:rbac:groups=cluster.x-k8s.io,resources=clusters,verbs=list
 
 func main() {
 	var metricsAddr string
